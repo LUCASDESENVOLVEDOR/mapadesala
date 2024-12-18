@@ -1,19 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script>
-
-     alert("AEEE")
-
-    </script>
+  <meta charset="UTF-8">
+  <title>Leitura Excel do GitHub</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-    
+  <h1>Dados do Excel</h1>
+  <pre id="output">Carregando...</pre>
 
-<p>FASE 1</p>
+  <script>
+    const excelUrl = "https://raw.githubusercontent.com/LUCASDESENVOLVEDOR/mapadesala/main/lucasteste.xlsx";
 
+    fetch(excelUrl)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        return response.arrayBuffer(); // Lê o arquivo como ArrayBuffer
+      })
+      .then(data => {
+        // Lê e processa o Excel com SheetJS
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0]; // Primeira aba
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet); // Converte para JSON
+
+        console.log(json);
+        document.getElementById("output").textContent = JSON.stringify(json, null, 2);
+      })
+      .catch(error => {
+        console.error("Erro ao buscar ou processar o arquivo:", error);
+        document.getElementById("output").textContent = "Erro: " + error.message;
+      });
+  </script>
 </body>
 </html>
