@@ -1,38 +1,54 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Leitura Excel do GitHub</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #output {
+            white-space: pre-wrap;
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
 </head>
 <body>
-  <h1>Dados do Excel</h1>
-  <pre id="output">Carregando...</pre>
+    <h1>Dados da Planilha Google</h1>
+    <h2>Dados:</h2>
+    <div id="output">Os dados serão exibidos aqui...</div>
 
-  <script>
-    const excelUrl = "https://raw.githubusercontent.com/LUCASDESENVOLVEDOR/mapadesala/main/lucasteste.xlsx";
+    <script>
+        const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSznDTCD_oukKg6wWiapyO_ov6H8lP0j8HLMVez7V1iuj7Me53aR21ht6K5ffiytC5iK43l-Nui4Jjm/pub?output=csv";
 
-    fetch(excelUrl)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`Erro HTTP: ${response.status}`);
-        }
-        return response.arrayBuffer(); // Lê o arquivo como ArrayBuffer
-      })
-      .then(data => {
-        // Lê e processa o Excel com SheetJS
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0]; // Primeira aba
-        const sheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(sheet); // Converte para JSON
+        fetch(sheetUrl)
+            .then(response => {
+                if (!response.ok) throw new Error('Erro ao carregar a planilha.');
+                return response.text();
+            })
+            .then(csvText => {
+                const rows = csvText.split('\n');
+                const headers = rows[0].split(',');
+                const data = rows.slice(1).map(row => {
+                    const values = row.split(',');
+                    return headers.reduce((obj, header, index) => {
+                        obj[header.trim()] = values[index]?.trim();
+                        return obj;
+                    }, {});
+                });
 
-        console.log(json);
-        document.getElementById("output").textContent = JSON.stringify(json, null, 2);
-      })
-      .catch(error => {
-        console.error("Erro ao buscar ou processar o arquivo:", error);
-        document.getElementById("output").textContent = "Erro: " + error.message;
-      });
-  </script>
+                document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                document.getElementById('output').textContent = 'Erro ao carregar os dados: ' + error.message;
+            });
+    </script>
 </body>
 </html>
