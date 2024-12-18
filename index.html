@@ -94,19 +94,46 @@
     font-size: 18px; /* Aumente o tamanho da fonte aqui */
     color: #333;
 }
+.lista-salas {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Divide em 3 colunas */
+    gap: 10px; /* Espaçamento entre itens */
+    max-width: 1000px;
+    margin: 20px auto;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: #333;
+}
+
+.lista-salas .item {
+    padding: 5px;
+    text-align: left;
+}
+.lista-salas .sala {
+   
+    color: #0056b3; /* Azul para destaque */
+}
+
+.lista-salas .descricao {
+    font-size: 16px; /* Font size padrão para a descrição */
+    color: #666; /* Cinza suave para a descrição */
+    margin-top: 5px;
+}
+
+
     </style>
 </head>
 <body>
     <!-- Primeira Tela -->
     <div id="primeira-tela" class="tela ativo">
-        <div class="header"><span style="color: red;">PERÍODO:</span> <span style="color: black;" id="periodo"></span></div>
-        <div class="info"> <span style="color: black;"id="data"></span></div>
-        <div class="info"> <span style="color: black;" id="dia"></span></div>
+       <p>LISTA COM TODOS.</p>
     </div>
 
     <!-- Tela de Salas -->
     <div id="salas-tela" class="tela">
-        <div class="header">EXIBIÇÃO DAS SALAS</div>
+        <div class="header"><span style="color: red;">PERÍODO:</span> <span style="color: black;" id="periodo"></span></div>
+        <div class="info"><span style="color: black;" id="dia"> - </span> <span style="color: black;"id="data"></span></div>
+      
         <div id="salas-grid" class="sala-grid"></div>
     </div>
 
@@ -267,9 +294,9 @@ const salas = [
     { nome: "SALA 108", horario: "", descricao: "" },
     { nome: "SALA 109", horario: "", descricao: "" },
     { nome: "SALA 110", horario: "", descricao: "" },
-    { nome: "SALA 111", horario: "08h00 às 12h00", descricao: "ILUMINAÇÃO RESIDENCIAL - IRS1 Renata" },
+    { nome: "SALA 111", horario: "08h00 às 12h00", descricao: "ILUMINAÇÃO RESIDENCIAL" },
     { nome: "SALA 112", horario: "", descricao: "" },
-    { nome: "SALA 113", horario: "08h00 às 12h00", descricao: "PERSONAL ORGANIZER: AMBIENTES RESIDENCIAIS - POAR06 Adriana Ribeiro" },
+    { nome: "SALA 113", horario: "08h00 às 12h00", descricao: "PERSONAL ORGANIZER: AMBIENTES RESIDENCIAIS" },
     { nome: "SALA 114", horario: "", descricao: "" },
     { nome: "SALA 115", horario: "", descricao: "" },
     { nome: "SALA 116", horario: "", descricao: "" },
@@ -283,8 +310,50 @@ const salas = [
     { nome: "SALA 208", horario: "", descricao: "" },
     { nome: "SALA 210", horario: "", descricao: "" },
     { nome: "SALA 211", horario: "", descricao: "" },
-    { nome: "SALA 212", horario: "", descricao: "" }
+    { nome: "SALA 212", horario: "", descricao: "" },
+    { nome: "SALA 213", horario: "", descricao: "" },
+    { nome: "SALA 214", horario: "", descricao: "" },
+    { nome: "SALA 215", horario: "", descricao: "" },
+    { nome: "AUDITÓRIO", horario: "", descricao: "" },
+    { nome: "OMBRELONES", horario: "", descricao: "" },
+    { nome: "ORQUIDÁRIO", horario: "", descricao: "" },
+    { nome: "HALL DO AUDITÓRIO", horario: "", descricao: "" },
+    { nome: "HALL DA ENTRADA", horario: "", descricao: "" },
+    { nome: "HALL 1º ANDAR", horario: "", descricao: "" },
+    { nome: "ESPAÇO AMARELO", horario: "", descricao: "" },
+    { nome: "ESPAÇO ESCADA", horario: "", descricao: "" },
+    { nome: "SALA DE REUNIÃO - 101", horario: "", descricao: "" },
+    { nome: "ESPAÇO EXPOSITIVO PAREDE", horario: "", descricao: "" },
+    { nome: "ESPAÇO EXPOSITIVO VITRINE", horario: "", descricao: "" },
+    { nome: "MEZANINO 1º ANDAR", horario: "", descricao: "" },
+    { nome: "MEZANINO 2º ANDAR", horario: "", descricao: "" }
 ];
+
+function exibirListaCompleta() {
+    const primeiraTela = document.getElementById('primeira-tela');
+    primeiraTela.innerHTML = '<p class="header" style="text-align: center; font-size: 20px; color: #444;">LISTA COM TODOS</p>'; // Título estilizado
+
+    const lista = document.createElement('div');
+    lista.className = 'lista-salas';
+
+    salas.forEach(sala => {
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.style.border = '1px solid #ccc'; // Adiciona uma borda
+        item.style.backgroundColor = '#f9f9f9'; // Fundo cinza claro
+        item.style.padding = '10px'; // Espaçamento interno
+        item.style.marginBottom = '5px'; // Espaçamento entre itens
+        item.style.borderRadius = '5px'; // Bordas arredondadas
+
+        item.innerHTML = `<span style="font-weight: bold;">${sala.nome}</span> - ${sala.descricao || ''}`;
+        lista.appendChild(item);
+    });
+
+    primeiraTela.appendChild(lista);
+}
+
+
+
 
 function exibirSalasFixas() {
     const salasGrid = document.getElementById('salas-grid');
@@ -298,10 +367,11 @@ function exibirSalasFixas() {
         div.innerHTML = `
             <div class="sala-header">${sala.nome}</div>
             <div class="sala-content">
-                <div class="horario">${sala.horario}</div>
+                
                 <div class="descricao">${sala.descricao}</div>
             </div>
         `;
+        //<div class="horario">${sala.horario}</div>
         salasGrid.appendChild(div);
     });
 
@@ -310,10 +380,10 @@ function exibirSalasFixas() {
     // Verifica se todas as salas foram exibidas
     if (indiceAtual >= salas.length) {
         indiceAtual = 0;
-        setTimeout(alternarParaPrimeiraTela, 10000); // Volta para a primeira tela após 5 segundos
+        setTimeout(alternarParaPrimeiraTela, 3000); // Volta para a primeira tela após 5 segundos
     } else {
         // Chama o próximo grupo de 8 salas após 5 segundos
-        setTimeout(exibirSalasFixas, 10000);
+        setTimeout(exibirSalasFixas, 3000);
     }
 }
 
@@ -340,6 +410,8 @@ function alternarParaPrimeiraTela() {
     salasTela.classList.remove('ativo');
     primeiraTela.classList.add('ativo');
 }
+
+exibirListaCompleta()
 
 // Loop infinito entre as telas
 setInterval(alternarTelas, 10000); // Alterna a cada 10 segundos
