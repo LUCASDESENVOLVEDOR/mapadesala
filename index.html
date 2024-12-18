@@ -1,54 +1,348 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Sheets Data</title>
+    <title>Exibição Dinâmica</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e8e8e8;
+            color: #333;
         }
-        #output {
-            white-space: pre-wrap;
-            background-color: #f4f4f4;
+        .tela, .salas {
+            display: none;
+            padding: 20px;
+            background-color: white;
+            border: 2px solid #ddd;
+            width: 80%;
+            max-width: 1200px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            text-align: center;
+            border-radius: 10px;
+        }
+        .ativo {
+            display: block;
+        }
+        .header {
+            font-size: 48px;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 20px;
+        }
+        .info {
+            font-size: 36px;
+            margin: 10px 0;
+        }
+        .periodo {
+            font-size: 48px;
+            font-weight: bold;
+            color: #d9534f;
+        }
+        .sala-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Ajusta responsivamente */
+        gap: 15px;
+        padding: 10px;
+    }
+    .sala-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
             padding: 10px;
-            border: 1px solid #ddd;
-            max-height: 400px;
-            overflow-y: auto;
         }
+        .sala {
+            border: 2px solid #000;
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            height: 150px;
+        }
+        .sala-header {
+            background-color: #f79256;
+            color: #fff;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 2px solid #ddd;
+        }
+        .sala-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 10px;
+        }
+        .sala-content .horario {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #555;
+    font-size: 24px; /* Aumente o tamanho da fonte aqui */
+}
+
+.sala-content .descricao {
+    font-size: 18px; /* Aumente o tamanho da fonte aqui */
+    color: #333;
+}
     </style>
 </head>
 <body>
-    <h1>Dados da Planilha Google</h1>
-    <h2>Dados:</h2>
-    <div id="output">Os dados serão exibidos aqui...</div>
+    <!-- Primeira Tela -->
+    <div id="primeira-tela" class="tela ativo">
+        <div class="header"><span style="color: red;">PERÍODO:</span> <span style="color: black;" id="periodo"></span></div>
+        <div class="info"> <span style="color: black;"id="data"></span></div>
+        <div class="info"> <span style="color: black;" id="dia"></span></div>
+    </div>
+
+    <!-- Tela de Salas -->
+    <div id="salas-tela" class="tela">
+        <div class="header">EXIBIÇÃO DAS SALAS</div>
+        <div id="salas-grid" class="sala-grid"></div>
+    </div>
 
     <script>
-        const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSznDTCD_oukKg6wWiapyO_ov6H8lP0j8HLMVez7V1iuj7Me53aR21ht6K5ffiytC5iK43l-Nui4Jjm/pub?output=csv";
+        // Array para armazenar os dados da planilha
+        let dadosSalas = [];
+     
+        let indiceAtual = 0;
+const salasPorTela = 8;
+let trocasRealizadas = 0;
 
-        fetch(sheetUrl)
-            .then(response => {
-                if (!response.ok) throw new Error('Erro ao carregar a planilha.');
-                return response.text();
-            })
-            .then(csvText => {
-                const rows = csvText.split('\n');
-                const headers = rows[0].split(',');
-                const data = rows.slice(1).map(row => {
-                    const values = row.split(',');
-                    return headers.reduce((obj, header, index) => {
-                        obj[header.trim()] = values[index]?.trim();
-                        return obj;
-                    }, {});
-                });
 
-                document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                document.getElementById('output').textContent = 'Erro ao carregar os dados: ' + error.message;
+        // Atualiza a data, dia da semana e período
+        function atualizarDataEPeriodo() {
+            const hoje = new Date();
+            const horas = hoje.getHours();
+            const dias = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+            const periodo = horas >= 5 && horas < 12 ? "MANHÃ" : horas >= 12 && horas < 18 ? "TARDE" : "NOITE";
+
+            document.getElementById('data').textContent = hoje.toLocaleDateString('pt-BR');
+            document.getElementById('dia').textContent = dias[hoje.getDay()];
+            document.getElementById('periodo').textContent = periodo;
+        }
+        atualizarDataEPeriodo();
+        setInterval(atualizarDataEPeriodo, 60000); // Atualiza a cada minuto
+
+        // Função para buscar dados da planilha
+        /*function buscarDadosGoogle() {
+            const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSznDTCD_oukKg6wWiapyO_ov6H8lP0j8HLMVez7V1iuj7Me53aR21ht6K5ffiytC5iK43l-Nui4Jjm/pub?output=csv";
+            fetch(sheetUrl)
+                .then(response => response.text())
+                .then(csv => {
+                    const linhas = csv.split('\n');
+                    const cabecalho = linhas[0].split(',');
+                    dadosSalas = linhas.slice(1).map(linha => {
+                        const valores = linha.split(',');
+                        return cabecalho.reduce((obj, chave, i) => {
+                            obj[chave.trim()] = valores[i]?.trim() || '';
+                            return obj;
+                        }, {});
+                    });
+                })
+                .catch(error => console.error("Erro ao carregar planilha:", error));
+        }
+        buscarDadosGoogle();
+        setInterval(buscarDadosGoogle, 5 * 60 * 1000); // Consulta a cada 5 minutos
+
+        // Função para exibir grupos de salas
+        function exibirSalas() {
+            const salasGrid = document.getElementById('salas-grid');
+            salasGrid.innerHTML = '';
+            const grupoSalas = dadosSalas.slice(indiceAtual, indiceAtual + salasPorTela);
+
+            grupoSalas.forEach(sala => {
+                const div = document.createElement('div');
+                div.className = 'sala';
+                div.textContent = sala['Nome da Sala'] || 'Sala Desconhecida';
+                salasGrid.appendChild(div);
             });
+
+            indiceAtual += salasPorTela;
+            if (indiceAtual >= dadosSalas.length) {
+                indiceAtual = 0; // Reinicia a exibição
+            }
+        }
+
+        function exibirSalasFixas() {
+    const salasGrid = document.getElementById('salas-grid');
+    salasGrid.innerHTML = `
+        <div class="sala">SALA 01</div>
+        <div class="sala">SALA 02</div>
+        <div class="sala">SALA 03</div>
+        <div class="sala">SALA 05</div>
+        <div class="sala">SALA 06</div>
+        <div class="sala">SALA 07</div>
+        <div class="sala">SALA 102</div>
+        <div class="sala">SALA 103</div>
+        <div class="sala">SALA 104</div>
+        <div class="sala">SALA 105</div>
+        <div class="sala">SALA 106</div>
+        <div class="sala">SALA 107</div>
+        <div class="sala">SALA 108</div>
+        <div class="sala">SALA 109</div>
+        <div class="sala">SALA 110</div>
+        <div class="sala">SALA 111</div>
+        <div class="sala">SALA 112</div>
+        <div class="sala">SALA 113</div>
+        <div class="sala">SALA 114</div>
+        <div class="sala">SALA 115</div>
+        <div class="sala">SALA 116</div>
+        <div class="sala">SALA 117</div>
+        <div class="sala">SALA 201</div>
+        <div class="sala">SALA 202</div>
+        <div class="sala">SALA 203</div>
+        <div class="sala">SALA 204</div>
+        <div class="sala">SALA 205</div>
+        <div class="sala">SALA 207</div>
+        <div class="sala">SALA 208</div>
+        <div class="sala">SALA 210</div>
+        <div class="sala">SALA 211</div>
+        <div class="sala">SALA 212</div>
+        <div class="sala">SALA 213</div>
+        <div class="sala">SALA 214</div>
+        <div class="sala">SALA 215</div>
+        <div class="sala">AUDITÓRIO</div>
+        <div class="sala">OMBRELONES</div>
+        <div class="sala">ORQUIDÁRIO</div>
+        <div class="sala">HALL DO AUDITÓRIO</div>
+        <div class="sala">HALL DA ENTRADA</div>
+        <div class="sala">HALL 1º ANDAR</div>
+        <div class="sala">ESPAÇO AMARELO</div>
+        <div class="sala">ESPAÇO ESCADA</div>
+        <div class="sala">SALA DE REUNIÃO - 101</div>
+        <div class="sala">ESPAÇO EXPOSITIVO PAREDE</div>
+        <div class="sala">ESPAÇO EXPOSITIVO VITRINE</div>
+        <div class="sala">MEZANINO 1º ANDAR</div>
+        <div class="sala">MEZANINO 2º ANDAR</div>
+    `;
+}
+exibirSalasFixas();
+
+
+        // Alterna entre telas
+        function alternarTelas() {
+    const primeiraTela = document.getElementById('primeira-tela');
+    const salasTela = document.getElementById('salas-tela');
+
+    if (primeiraTela.classList.contains('ativo')) {
+        primeiraTela.classList.remove('ativo');
+        salasTela.classList.add('ativo');
+        exibirSalas();
+    } else {
+        salasTela.classList.remove('ativo');
+        primeiraTela.classList.add('ativo');
+    }
+}
+
+
+        // Loop infinito entre telas
+        setInterval(alternarTelas, 10000); // 10 segundos para alternar */
+
+
+
+// Lista fixa de salas
+const salas = [
+    { nome: "SALA 01", horario: "", descricao: "" },
+    { nome: "SALA 02", horario: "", descricao: "" },
+    { nome: "SALA 03", horario: "", descricao: "" },
+    { nome: "SALA 05", horario: "", descricao: "" },
+    { nome: "SALA 06", horario: "", descricao: "" },
+    { nome: "SALA 07", horario: "", descricao: "" },
+    { nome: "SALA 102", horario: "", descricao: "" },
+    { nome: "SALA 103", horario: "", descricao: "" },
+    { nome: "SALA 104", horario: "", descricao: "" },
+    { nome: "SALA 105", horario: "", descricao: "" },
+    { nome: "SALA 106", horario: "", descricao: "" },
+    { nome: "SALA 107", horario: "", descricao: "" },
+    { nome: "SALA 108", horario: "", descricao: "" },
+    { nome: "SALA 109", horario: "", descricao: "" },
+    { nome: "SALA 110", horario: "", descricao: "" },
+    { nome: "SALA 111", horario: "08h00 às 12h00", descricao: "ILUMINAÇÃO RESIDENCIAL - IRS1 Renata" },
+    { nome: "SALA 112", horario: "", descricao: "" },
+    { nome: "SALA 113", horario: "08h00 às 12h00", descricao: "PERSONAL ORGANIZER: AMBIENTES RESIDENCIAIS - POAR06 Adriana Ribeiro" },
+    { nome: "SALA 114", horario: "", descricao: "" },
+    { nome: "SALA 115", horario: "", descricao: "" },
+    { nome: "SALA 116", horario: "", descricao: "" },
+    { nome: "SALA 117", horario: "", descricao: "" },
+    { nome: "SALA 201", horario: "", descricao: "" },
+    { nome: "SALA 202", horario: "", descricao: "" },
+    { nome: "SALA 203", horario: "", descricao: "" },
+    { nome: "SALA 204", horario: "", descricao: "" },
+    { nome: "SALA 205", horario: "", descricao: "" },
+    { nome: "SALA 207", horario: "", descricao: "" },
+    { nome: "SALA 208", horario: "", descricao: "" },
+    { nome: "SALA 210", horario: "", descricao: "" },
+    { nome: "SALA 211", horario: "", descricao: "" },
+    { nome: "SALA 212", horario: "", descricao: "" }
+];
+
+function exibirSalasFixas() {
+    const salasGrid = document.getElementById('salas-grid');
+    salasGrid.innerHTML = '';
+
+    const grupoSalas = salas.slice(indiceAtual, indiceAtual + salasPorTela);
+
+    grupoSalas.forEach(sala => {
+        const div = document.createElement('div');
+        div.className = 'sala';
+        div.innerHTML = `
+            <div class="sala-header">${sala.nome}</div>
+            <div class="sala-content">
+                <div class="horario">${sala.horario}</div>
+                <div class="descricao">${sala.descricao}</div>
+            </div>
+        `;
+        salasGrid.appendChild(div);
+    });
+
+    indiceAtual += salasPorTela;
+
+    // Verifica se todas as salas foram exibidas
+    if (indiceAtual >= salas.length) {
+        indiceAtual = 0;
+        setTimeout(alternarParaPrimeiraTela, 10000); // Volta para a primeira tela após 5 segundos
+    } else {
+        // Chama o próximo grupo de 8 salas após 5 segundos
+        setTimeout(exibirSalasFixas, 10000);
+    }
+}
+
+
+
+
+// Alterna entre a primeira tela e a tela de salas
+function alternarTelas() {
+    const primeiraTela = document.getElementById('primeira-tela');
+    const salasTela = document.getElementById('salas-tela');
+
+    if (primeiraTela.classList.contains('ativo')) {
+        primeiraTela.classList.remove('ativo');
+        salasTela.classList.add('ativo');
+        exibirSalasFixas();
+    }
+}
+
+// Retorna para a primeira tela
+function alternarParaPrimeiraTela() {
+    const primeiraTela = document.getElementById('primeira-tela');
+    const salasTela = document.getElementById('salas-tela');
+
+    salasTela.classList.remove('ativo');
+    primeiraTela.classList.add('ativo');
+}
+
+// Loop infinito entre as telas
+setInterval(alternarTelas, 10000); // Alterna a cada 10 segundos
     </script>
 </body>
 </html>
